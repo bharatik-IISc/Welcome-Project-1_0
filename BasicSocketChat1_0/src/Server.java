@@ -6,14 +6,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class Server {
 	
-	//initialize socket and input stream
+	public static Integer activeClients;
 	 
 	private ServerSocket server = null;
-	
-	
+	public static final String db_url = "jdbc:postgresql://localhost:5432/chat_messenger";
+	public static final String db_username = "postgres";
+	public static final String db_password = "postgres";
 	
 	//Constructor with port
 	public Server(int port)
@@ -28,16 +34,21 @@ public class Server {
 			return;
 		}
 		System.out.println("Server Started");
+		
+		activeClients = 0;
 			
 		// Infinite loop for client requests
-		while(true)
-		{
+		
 			Socket socket = null;
 			try {
-					
+				
+				while(true)
+				{
+				
 				System.out.println("Server is accepting new Clients");
 				socket = server.accept();
 				System.out.println("Client accepted");
+				
 				
 				//Takes input and output streams from the client socket
 				DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -47,16 +58,18 @@ public class Server {
 				Thread t = new ClientHandler(socket,in,out);
 				t.start();
 				
-				String line = "";
-					try {
-						line = in.readUTF();
-						System.out.println(line);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						System.out.println("Unable to read input");
-						e.printStackTrace();
-					}
-					
+//				String line = "";
+//					try {
+//						line = in.readUTF();
+//						System.out.println(line);
+//					} catch (IOException e) {
+//						// TODO Auto-generated catch block
+//						System.out.println("Unable to read input");
+//						e.printStackTrace();
+//					}
+//					
+				
+			}
 
 				
 					
@@ -64,14 +77,16 @@ public class Server {
 				// TODO Auto-generated catch block
 				System.out.println("Socket Exception (create/accept)");
 				e.printStackTrace();
+				
 			}
 			finally {
 				//Closing the connection
 				System.out.println("Closing the connection");
 				
 				try {
+					System.out.println("Closing the socket");
 					socket.close();
-					in.close();
+					
 					
 				}
 				catch (IOException e) {
@@ -81,7 +96,7 @@ public class Server {
 				}
 			}
 				
-		}
+		
 			
 
 		
@@ -94,6 +109,7 @@ public class Server {
 	public static void main(String args[])
 	{
 		Server server = new Server(5000);
+		
 	}
 
 }

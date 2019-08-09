@@ -1,6 +1,8 @@
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -11,11 +13,14 @@ public class Client {
 	//initialize socket and io streams
 	private Socket socket = null;
 	private BufferedReader input = null;
-	private DataOutputStream out = null;
+	
 	
 	//constructor to initialize IP and port
 	public Client(String ip, int port)
 	{
+		DataOutputStream out = null;
+		DataInputStream in = null;
+		
 		//establish a connection
 		System.out.println("establish a connection");
 		try {
@@ -24,9 +29,9 @@ public class Client {
 			
 			//Take input from terminal
 			input = new BufferedReader(new InputStreamReader(System.in));
-			
-			// Sends output to the socket
-			out = new DataOutputStream(socket.getOutputStream());
+						
+			out = new DataOutputStream(socket.getOutputStream()); // Sends output to the socket
+			in = new DataInputStream(socket.getInputStream()); // Gets input from the socket
 			
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
@@ -44,8 +49,44 @@ public class Client {
 		try {
 			//Limitation introduced : read message just till 1st \r, \n or EOF 
 			System.out.println("Wait for client input and write to socket");
-			line = input.readLine();
-			out.writeUTF(line);
+			while(!line.equals("exit"))
+			{
+				String serverMsg = in.readUTF();
+				System.out.print(serverMsg);
+				
+				line = input.readLine();
+				out.writeUTF(line);
+				
+				//Upload the file if an attachment is sent
+				if(serverMsg.equals("Upload File Path : "))
+				{
+					//Code to upload the file
+					FileInputStream fis = new FileInputStream(line);
+					byte[] fileBuffer = new byte[4096];
+					
+					while(fis.read(fileBuffer)>0)
+					{
+						out.write(fileBuffer);
+					}
+					 
+					fis.close();
+				}
+				else if(serverMsg.equals("Download File Path : "))
+				{
+					//Code to download file 
+					FileOutputStream fos = new FileOutputStream(line);
+					byte[] fileBuffer = new byte[4096];
+					
+					while(in.read(fileBuffer,0,fileBuffer.length)>0)
+					{
+						fos.write(fileBuffer);
+					}
+					
+				}
+				
+			}
+			
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
